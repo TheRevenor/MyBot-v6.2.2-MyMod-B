@@ -42,6 +42,13 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		IniReadS($barrackPos[3][0], $building, "other", "xBarrack4", "0")
 		IniReadS($barrackPos[3][1], $building, "other", "yBarrack4", "0")
 
+		; Boost Dark Barrack
+		IniReadS($DarkbarrackPos[0][0], $building, "other", "xDarkBarrack1", "0")
+		IniReadS($DarkbarrackPos[0][1], $building, "other", "yDarkBarrack1", "0")
+
+		IniReadS($DarkbarrackPos[1][0], $building, "other", "xDarkBarrack2", "0")
+		IniReadS($DarkbarrackPos[1][1], $building, "other", "yDarkBarrack2", "0")
+		
 		IniReadS($ArmyPos[0], $building, "other", "xArmy", "0")
 		IniReadS($ArmyPos[0], $building, "other", "yArmy", "0")
 		IniReadS($TotalCamp, $building, "other", "totalcamp", "0")
@@ -477,7 +484,7 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		IniReadS($delayActivateW, $config, "attack", "delayActivateW", "9")
 		$delayActivateW *= 1000
 
-		IniReadS($TakeLootSnapShot, $config, "attack", "TakeLootSnapShot", "0")
+		IniReadS($TakeLootSnapShot, $config, "attack", "TakeLootSnapShot", "1")
 		IniReadS($ScreenshotLootInfo, $config, "attack", "ScreenshotLootInfo", "0")
 
 
@@ -637,6 +644,17 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		IniReadS($iWAOffsetX, $config, "other", "WAOffsetX", "0")
 		IniReadS($iWAOffsetY, $config, "other", "WAOffsetY", "0")
 
+		; Telegram Notify - Added by CDudz
+		IniReadS($TelegramEnabled, $config, "pushbullet", "PBEnabled2", "0")
+		IniReadS($TelegramToken, $config, "pushbullet", "AccountToken2", "")
+		IniReadS($ichkAlertBuilderIdle, $config, "pushbullet", "AlertBuilderIdle", "0")
+		
+		; Notify Top Gain Loot - Added by TheRevenor
+		$pAlertTopGain = IniRead($config, "pushbullet", "AlertTopGain", "0")
+		
+		; Notify SmartUpgrade - Added by Roro-Titi
+		$ichkAlertSmartUpgrade = IniRead($config, "pushbullet", "chkAlertSmartUpgrade", "0")
+		
 		;PushBullet Settings ---------------------------------------------
 		IniReadS($PushBulletToken, $config, "pushbullet", "AccountToken", "")
 		IniReadS($iOrigPushBullet, $config, "pushbullet", "OrigPushBullet", $sCurrProfile)
@@ -667,6 +685,16 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		IniReadS($ichkDeleteLoots, $config, "deletefiles", "DeleteLoots", "1")
 		IniReadS($iDeleteLootsDays, $config, "deletefiles", "DeleteLootsDays", "2")
 
+		; Pushbullet Stuff
+		$VillageStatIncrement = IniRead($config, "pushbullet", "VillageStatIncrement", "0")
+		$VillageStatIncrementTXT = IniRead($config, "pushbullet", "VillageStatIncrementTXT", "5")
+		$SearchNotifyCount = IniRead($config, "pushbullet", "SearchNotifyCount", "0")
+		$SearchNotifyCountTXT = IniRead($config, "pushbullet", "SearchNotifyCountTXT", "25")
+		
+		; psychic octopus max logout time
+		$TrainLogoutMaxTime = IniRead($config, "TrainLogout", "TrainLogoutMaxTime", "0")
+		$TrainLogoutMaxTimeTXT = IniRead($config, "TrainLogout", "TrainLogoutMaxTimeTXT", "20")
+		
 		$DebugClick = BitOR($DebugClick, IniRead($config, "debug", "debugsetclick", "0"))
 		If $DevMode = 1 Then
 			$DebugSetlog = BitOR($DebugSetlog, IniRead($config, "debug", "debugsetlog", "0"))
@@ -736,7 +764,7 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		;InireadS(xxxx,$config, "attack", "xxxx", "0")
 
 		;forced Total Camp values
-		$ichkTotalCampForced = IniRead($config, "other", "ChkTotalCampForced", "0")
+		$ichkTotalCampForced = IniRead($config, "other", "ChkTotalCampForced", "1")
 		$iValueTotalCampForced = IniRead($config, "other", "ValueTotalCampForced", "200")
 		;InireadS(xxxx,$config, "attack", "xxxx", "0")
 		;InireadS(xxxx,$config, "attack", "xxxx", "0")
@@ -992,15 +1020,115 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		IniReadS($ichkTSActivateCamps2, $config, "search", "ChkTSSearchCamps2", "0")
 		IniReadS($iEnableAfterArmyCamps2, $config, "search", "TSEnableAfterArmyCamps2", "100")
 		;==>Apply to switch Attack Standard after THSnipe End
-
+		
+		; CSV Deployment Speed Mod
+		IniReadS($isldSelectedCSVSpeed[$DB], $config, "attack", "CSVSpeedDB", 3)
+		IniReadS($isldSelectedCSVSpeed[$LB], $config, "attack", "CSVSpeedAB", 3)
+		
 		;Wait For Spells
 		IniReadS($iEnableSpellsWait[$DB], $config, "search", "ChkDBSpellsWait", "0")
 		IniReadS($iEnableSpellsWait[$LB], $config, "search", "ChkABSpellsWait", "0")
 		IniReadS($iTotalTrainSpaceSpell, $config, "search", "TotalTrainSpaceSpell", "0")
 
+		; Android Settings - Added by LunaEclipse
+		$sAndroid = IniRead($config, "Android", "Emulator", "<No Emulators>")
+		$sAndroidInstance = IniRead($config, "Android", "Instance", "")
+		
+		; SmartZap Settings - Added by LunaEclipse
+		$ichkSmartZap = IniRead($config, "SmartZap", "UseSmartZap", "1")
+		$ichkSmartZapDB = IniRead($config, "SmartZap", "ZapDBOnly", "1")
+        $ichkSmartZapSaveHeroes = IniRead($config, "SmartZap", "THSnipeSaveHeroes", "1")
+		$itxtMinDE = IniRead($config, "SmartZap", "MinDE", "250")
+		
+		; ExtremeZap - Added by TheRevenor
+		$ichkExtLightSpell = IniRead($config, "MOD", "ExtLightSpell", "0")
+		$itxtMinDE = IniRead($config, "MOD", "MinDE", "250")
+		
+		; Check Collectors Outside - Added by TheRevenor
+		$ichkDBMeetCollOutside = IniRead($config, "search", "DBMeetCollOutside", "0")
+		$iDBMinCollOutsidePercent = IniRead($config, "search", "DBMinCollOutsidePercent", "50")
+		
+		; Check Connections - Added by TheRevenor
+		$ichkConnection = IniRead($config, "general", "ChkConnect", "1")
+		
+		; ChatBot - Added by TheRevenor
+		$ichkchatdelay = IniRead($config, "global", "chdelay", "0")
+		
+		; Close TakeBrake - Added by TheRevenor
+		$ichkCloseTakeBreak = IniRead($config, "general", "ChkCloseEmuPB", "0")
+		
+		; Multi Farming Settings - Added by TheRevenor
+		$ichkSwitchDonate = IniRead($config, "Multy", "SwitchDonate", "0")
+		$ichkMultyFarming = IniRead($config, "Multy", "MultyFarming", "0")
+		$iAccount = IniRead($config, "Multy", "Account", "2")
+		
+		; Donate Stats - Added by cutidudz
+		$ichkDStats = IniRead($config, "donate", "chkDStats", "1")
+		$ichkLimitDStats = IniRead($config, "stats", "chkLimitDStats", "0")
+
+		; Don't Barack Mode - Added by AwesomeGamer
+		$iChkDontRemove = IniRead($config, "troop", "DontRemove", "0")
+		$iChkBarrackSpell = IniRead($config, "Spells", "BarrackSpell", "0")
+		
+		; SmartUpgrade - Added by Roro-Titi
+		$ichkSmartUpgrade = IniRead($config, "upgrade", "chkSmartUpgrade", "0")
+		$ichkIgnoreTH = IniRead($config, "upgrade", "chkIgnoreTH", "0")
+		$ichkIgnoreKing = IniRead($config, "upgrade", "chkIgnoreKing", "0")
+		$ichkIgnoreQueen = IniRead($config, "upgrade", "chkIgnoreQueen", "0")
+		$ichkIgnoreWarden = IniRead($config, "upgrade", "chkIgnoreWarden", "0")
+		$ichkIgnoreCC = IniRead($config, "upgrade", "chkIgnoreCC", "0")
+		$ichkIgnoreLab = IniRead($config, "upgrade", "chkIgnoreLab", "0")
+		$ichkIgnoreBarrack = IniRead($config, "upgrade", "chkIgnoreBarrack", "0")
+		$ichkIgnoreDBarrack = IniRead($config, "upgrade", "chkIgnoreDBarrack", "0")
+		$ichkIgnoreFactory = IniRead($config, "upgrade", "chkIgnoreFactory", "0")
+		$ichkIgnoreDFactory = IniRead($config, "upgrade", "chkIgnoreDFactory", "0")
+		$ichkIgnoreGColl = IniRead($config, "upgrade", "chkIgnoreGColl", "0")
+		$ichkIgnoreEColl = IniRead($config, "upgrade", "chkIgnoreEColl", "0")
+		$ichkIgnoreDColl = IniRead($config, "upgrade", "chkIgnoreDColl", "0")
+		$iSmartMinGold = IniRead($config, "upgrade", "SmartMinGold", "0")
+		$iSmartMinElixir = IniRead($config, "upgrade", "SmartMinElixir", "0")
+		$iSmartMinDark = IniRead($config, "upgrade", "SmartMinDark", "0")
+		
+		; Upgrade Management - Added by MMHK
+		If IniRead($config, "upgrade", "UpdateNewUpgradesOnly", "0") = 1 Then
+			$bUpdateNewUpgradesOnly = True
+		Else
+			$bUpdateNewUpgradesOnly = False
+		EndIf
+		
 	Else
 		Return False
 	EndIf
+	
+	; Profile Switch
+	$ichkGoldSwitchMax = IniRead($config, "profiles", "chkGoldSwitchMax", "0")
+	$icmbGoldMaxProfile = IniRead($config, "profiles", "cmbGoldMaxProfile", "0")
+	$itxtMaxGoldAmount = IniRead($config, "profiles", "txtMaxGoldAmount", "6000000")
+	$ichkGoldSwitchMin = IniRead($config, "profiles", "chkGoldSwitchMin", "0")
+	$icmbGoldMinProfile = IniRead($config, "profiles", "cmbGoldMinProfile", "0")
+	$itxtMinGoldAmount = IniRead($config, "profiles", "txtMinGoldAmount", "500000")
+
+	$ichkElixirSwitchMax = IniRead($config, "profiles", "chkElixirSwitchMax", "0")
+	$icmbElixirMaxProfile = IniRead($config, "profiles", "cmbElixirMaxProfile", "0")
+	$itxtMaxElixirAmount = IniRead($config, "profiles", "txtMaxElixirAmount", "6000000")
+	$ichkElixirSwitchMin = IniRead($config, "profiles", "chkElixirSwitchMin", "0")
+	$icmbElixirMinProfile = IniRead($config, "profiles", "cmbElixirMinProfile", "0")
+	$itxtMinElixirAmount = IniRead($config, "profiles", "txtMinElixirAmount", "500000")
+
+	$ichkDESwitchMax = IniRead($config, "profiles", "chkDESwitchMax", "0")
+	$icmbDEMaxProfile = IniRead($config, "profiles", "cmbDEMaxProfile", "0")
+	$itxtMaxDEAmount = IniRead($config, "profiles", "txtMaxDEAmount", "200000")
+	$ichkDESwitchMin = IniRead($config, "profiles", "chkDESwitchMin", "0")
+	$icmbDEMinProfile = IniRead($config, "profiles", "cmbDEMinProfile", "0")
+	$itxtMinDEAmount = IniRead($config, "profiles", "txtMinDEAmount", "10000")
+
+	$ichkTrophySwitchMax = IniRead($config, "profiles", "chkTrophySwitchMax", "0")
+	$icmbTrophyMaxProfile = IniRead($config, "profiles", "cmbTrophyMaxProfile", "0")
+	$itxtMaxTrophyAmount = IniRead($config, "profiles", "txtMaxTrophyAmount", "3000")
+	$ichkTrophySwitchMin = IniRead($config, "profiles", "chkTrophySwitchMin", "0")
+	$icmbTrophyMinProfile = IniRead($config, "profiles", "cmbTrophyMinProfile", "0")
+	$itxtMinTrophyAmount = IniRead($config, "profiles", "txtMinTrophyAmount", "1000")
+	
 EndFunc   ;==>readConfig
 
 

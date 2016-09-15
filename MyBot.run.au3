@@ -35,8 +35,16 @@ ProcessSetPriority(@AutoItPID, $PROCESS_ABOVENORMAL)
 Global $iBotLaunchTime = 0
 Local $hBotLaunchTime = TimerInit()
 
+Global $sGitHubModOwner = "TheRevenor"
+Global $sGitHubModRepo = "MyBot-v6.2.2-MyMod"
+Global $sGitHubModLatestReleaseTag = "v2.0.3"
+Global $sModSupportUrl = "https://mybot.run/forums/index.php?/topic/22790-v621-mod-therevenor-03-09-2016"
+
 $sBotVersion = "v6.2.2" ;~ Don't add more here, but below. Version can't be longer than vX.y.z because it it also use on Checkversion()
-$sBotTitle = "My Bot " & $sBotVersion & " " ;~ Don't use any non file name supported characters like \ / : * ? " < > |
+$sBotTitle = "My Bot " & $sBotVersion & " MOD TheRevenor " & $sGitHubModLatestReleaseTag & "_B " ;~ Don't use any non file name supported characters like \ / : * ? " < > |
+$sModversion = $sGitHubModLatestReleaseTag
+
+Global $sBotTitleDefault = $sBotTitle
 
 #include "COCBot\functions\Config\DelayTimes.au3"
 #include "COCBot\MBR Global Variables.au3"
@@ -44,6 +52,7 @@ _GDIPlus_Startup()
 #include "COCBot\GUI\MBR GUI Design Splash.au3"
 #include "COCBot\functions\Config\ScreenCoordinates.au3"
 #include "COCBot\functions\Other\ExtMsgBox.au3"
+#include "COCBot\functions\Mod\Chatbot\Chatbot.au3"
 
 Opt("GUIResizeMode", $GUI_DOCKALL) ; Default resize mode for dock android support
 Opt("GUIEventOptions", 1) ; Handle minimize and restore for dock android support
@@ -53,7 +62,7 @@ Opt("WinTitleMatchMode", 3) ; Window Title exact match mode
 If Not FileExists(@ScriptDir & "\License.txt") Then
 	$license = InetGet("http://www.gnu.org/licenses/gpl-3.0.txt", @ScriptDir & "\License.txt")
 EndIf
-
+ 
 ;multilanguage
 #include "COCBot\functions\Other\Multilanguage.au3"
 DetectLanguage()
@@ -75,9 +84,10 @@ If CheckPrerequisites() Then
 EndIf
 
 #include "COCBot\functions\Android\Android.au3"
+#include "COCBot\functions\Android\SecureME.au3"
 
 ; Update Bot title
-$sBotTitle = $sBotTitle & "(" & ($AndroidInstance <> "" ? $AndroidInstance : $Android) & ")" ;Do not change this. If you do, multiple instances will not work.
+$sBotTitle = $sBotTitle & "(" & ($AndroidInstance <> "" ? $AndroidInstance : $Android) & ")" ; Do not change this. If you do, multiple instances will not work.
 
 UpdateSplashTitle($sBotTitle & GetTranslated(500, 20, ", Profile: %s", $sCurrProfile))
 
@@ -110,6 +120,8 @@ EndIf
 
 $sMsg = GetTranslated(500, 5, "My Bot for %s is already running.\r\n\r\n", $sAndroidInfo)
 If $hMutex_BotTitle = 0 Then
+	RemoveFolderFromInUseList()
+	DeletePicturesHostFolder()
 	If IsHWnd($hSplash) Then GUIDelete($hSplash) ; Delete the splash screen since we don't need it anymore
 	MsgBox(BitOR($MB_OK, $MB_ICONINFORMATION, $MB_TOPMOST), $sBotTitle, $sMsg & $cmdLineHelp)
 	_GDIPlus_Shutdown()
@@ -170,6 +182,13 @@ If $FoundInstalledAndroid Then
 EndIf
 SetLog(GetTranslated(500, 8, "Android Emulator Configuration: %s", $sAndroidInfo), $COLOR_GREEN)
 
+
+; Add Telegram extension by CDudz
+$lastmessage = GetLastMsg()
+If $FirstRun = 1 Then
+	$lastremote = $lastuid
+	Getchatid(GetTranslated(620, 92, "select your remote")) ; receive Telegram chat id and send keyboard
+EndIf
 ;AdlibRegister("PushBulletRemoteControl", $PBRemoteControlInterval)
 ;AdlibRegister("PushBulletDeleteOldPushes", $PBDeleteOldPushesInterval)
 
@@ -183,6 +202,7 @@ LoadAmountOfResourcesImages()
 
 ;~ InitializeVariables();initialize variables used in extra windows
 CheckVersion() ; check latest version on mybot.run site
+SetComboTroopComp()
 
 ;~ Remember time in Milliseconds bot launched
 $iBotLaunchTime = TimerDiff($hBotLaunchTime)
@@ -242,9 +262,13 @@ Func runBot() ;Bot that runs everything in order
 				If _Sleep($iDelayRunBot2) Then Return
 			checkMainScreen(False)
 				If $Restart = True Then ContinueLoop
-			If $RequestScreenshot = 1 Then PushMsg("RequestScreenshot")
+			If $ichkMultyFarming = 1 Or $ichkSwitchDonate = 1 Then DetectAccount()
+			If $RequestScreenshot = 1 Then PushMsgToPushBullet("RequestScreenshot")
+			If $RequestBuilderInfo = 1 Then PushMsgToPushBullet("BuilderInfo")
+			If $RequestShieldInfo = 1 Then PushMsgToPushBullet("ShieldInfo")
 				If _Sleep($iDelayRunBot3) Then Return
 			VillageReport()
+			ProfileSwitch() ; Added for Switch profile
 			If $OutOfGold = 1 And (Number($iGoldCurrent) >= Number($itxtRestartGold)) Then ; check if enough gold to begin searching again
 				$OutOfGold = 0 ; reset out of gold flag
 				Setlog("Switching back to normal after no gold to search ...", $COLOR_RED)
@@ -266,6 +290,7 @@ Func runBot() ;Bot that runs everything in order
 				If _Sleep($iDelayRunBot5) Then Return
 			checkMainScreen(False)
 				If $Restart = True Then ContinueLoop
+			If $FirstStart Then RunFirstAndDeleteQueuedTroops()
 			Local $aRndFuncList[3] = ['Collect', 'CheckTombs', 'ReArm']
 			While 1
 				If $RunState = False Then Return
@@ -283,8 +308,11 @@ Func runBot() ;Bot that runs everything in order
 			WEnd
 				If $RunState = False Then Return
 				If $Restart = True Then ContinueLoop
+			IsWaitingForConnection()
+			DonateCC()
+			If _Sleep($iDelayRunBot3) Then Return
 			If IsSearchAttackEnabled() Then  ; if attack is disabled skip reporting, requesting, donating, training, and boosting
-			   Local $aRndFuncList[10] = ['ReplayShare', 'ReportNotify', 'DonateCC,Train', 'BoostBarracks', 'BoostSpellFactory', 'BoostDarkSpellFactory', 'BoostKing', 'BoostQueen', 'BoostWarden', 'RequestCC']
+			   Local $aRndFuncList[6] = ['ReplayShare', 'ReportNotify', 'BoostBarracks', 'BoostSpellFactories', 'BoostHeroes', 'RequestCC']
 			   While 1
 				   If $RunState = False Then Return
 				   If $Restart = True Then ContinueLoop 2 ; must be level 2 due to loop-in-loop
@@ -305,6 +333,12 @@ Func runBot() ;Bot that runs everything in order
 					If Unbreakable() = True Then ContinueLoop
 				EndIf
 			EndIf
+				If $RunState = False Then Return
+				If _Sleep($iDelayRunBot3) Then Return
+			IsWaitingForConnection()
+			Train()
+				If $Restart = True Then ContinueLoop
+			SmartUpgrade()
 			Local $aRndFuncList[3] = ['Laboratory', 'UpgradeHeroes', 'UpgradeBuilding']
 			While 1
 				If $RunState = False Then Return
@@ -327,6 +361,7 @@ Func runBot() ;Bot that runs everything in order
 				UpgradeWall()
 					If _Sleep($iDelayRunBot3) Then Return
 					If $Restart = True Then ContinueLoop
+				PushMsgToPushBullet("CheckBuilderIdle")
 				Idle()
 					;$fullArmy1 = $fullArmy
 					If _Sleep($iDelayRunBot3) Then Return
@@ -376,6 +411,138 @@ Func runBot() ;Bot that runs everything in order
 			If _Sleep($iDelayRunBot5) Then Return
 			If $Restart = True Then ContinueLoop
 		EndIf
+		;Multy-Farming ==============================================================================================================
+		If $ichkMultyFarming = 1 And $iMultyFarming = 1 Then
+			SetLog("Multy-Farming Mode Active...", $COLOR_RED)
+			SetLog("Please don't PAUSE/STOP BOT during profile change", $COLOR_RED)
+			$canRequestCC = True
+			$bDonationEnabled = True
+			Sleep(1500)
+			RequestCC()
+			ClickP($aAway, 1, 0, "#0000") ;Click Away
+			Sleep(1500)
+			$iShouldRearm = True
+			$FirstStart = True
+			$RunState = True
+			$iSwCount = 0
+			If $sCurrProfile = "[01] Main" Then
+				If IniRead($sProfilePath & "\[02] Second\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Second")
+				ElseIf IniRead($sProfilePath & "\[03] Third\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Third")
+				ElseIf IniRead($sProfilePath & "\[04] Fourth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Fourth")
+				ElseIf IniRead($sProfilePath & "\[05] Fifth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Fifth")
+				ElseIf IniRead($sProfilePath & "\[06] Sixth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Sixth")
+				Else
+					SetLog("You don't have other profiles configured for multy-farming. Swithing accounts canceled.", $COLOR_RED)
+				EndIF
+
+			ElseIf $sCurrProfile = "[02] Second" Then
+				If $iAccount = "3" Or $iAccount = "4" Or $iAccount = "5" Or $iAccount = "6" Then
+					If IniRead($sProfilePath & "\[03] Third\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Third")
+					ElseIf IniRead($sProfilePath & "\[04] Fourth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fourth")
+					ElseIf IniRead($sProfilePath & "\[05] Fifth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fifth")
+					ElseIf IniRead($sProfilePath & "\[06] Sixth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Sixth")
+					ElseIf IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					Else
+						SetLog("You don't have other profiles configured for multy-farming. Swithing accounts canceled.", $COLOR_RED)
+					EndIF
+				Else
+					If IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					EndIF
+				EndIf
+
+			ElseIf $sCurrProfile = "[03] Third" Then
+				If $iAccount = "4" Or $iAccount = "5" Or $iAccount = "6" Then
+					If IniRead($sProfilePath & "\[04] Fourth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fourth")
+					ElseIf IniRead($sProfilePath & "\[05] Fifth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fifth")
+					ElseIf IniRead($sProfilePath & "\[06] Sixth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Sixth")
+					ElseIf IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					ElseIf IniRead($sProfilePath & "\[02] Second\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Second")
+					Else
+						SetLog("You don't have other profiles configured for multy-farming. Swithing accounts canceled.", $COLOR_RED)
+					EndIf
+
+				ElseIf $iAccount = "3" Then
+					If IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					EndIf
+
+				EndIf
+			ElseIf $sCurrProfile = "[04] Fourth" Then
+				If $iAccount = "5" Or $iAccount = "6" Then
+					If IniRead($sProfilePath & "\[05] Fifth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fifth")
+					ElseIf IniRead($sProfilePath & "\[06] Sixth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Sixth")
+					ElseIf IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					ElseIf IniRead($sProfilePath & "\[02] Second\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Second")
+					ElseIf IniRead($sProfilePath & "\[03] Third\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Third")
+					Else
+						SetLog("You don't have other profiles configured for multy-farming. Swithing accounts canceled.", $COLOR_RED)
+					EndIf
+				ElseIf $iAccount = "4" Then
+					If IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					EndIf
+				EndIf
+			ElseIf $sCurrProfile = "[05] Fifth" Then
+				If $iAccount = "6" Then
+					If IniRead($sProfilePath & "\[06] Sixth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Sixth")
+					ElseIf IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					ElseIf IniRead($sProfilePath & "\[02] Second\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Second")
+					ElseIf IniRead($sProfilePath & "\[03] Third\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Third")
+					ElseIf IniRead($sProfilePath & "\[04] Fourth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fourth")
+					Else
+					
+						SetLog("You don't have other profiles configured for multy-farming. Swithing accounts canceled.", $COLOR_RED)
+					EndIf
+
+				ElseIf $iAccount = "5" Then
+					If IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Main")
+					EndIf
+
+				EndIf
+			ElseIf $sCurrProfile = "[06] Sixth" Then
+				If IniRead($sProfilePath & "\[01] Main\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Main")
+				ElseIf IniRead($sProfilePath & "\[02] Second\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Second")
+				ElseIf IniRead($sProfilePath & "\[03] Third\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+					SwitchAccount("Third")
+				ElseIf IniRead($sProfilePath & "\[04] Fourth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fourth")
+				ElseIf IniRead($sProfilePath & "\[05] Fifth\config.ini", "Multy", "MultyFarming", "0") = "1" Then
+						SwitchAccount("Fifth")
+				Else
+					SetLog("You don't have other profiles configured for multy-farming. Swithing accounts canceled.", $COLOR_RED)
+				EndIf
+			EndIf
+		EndIf
+		;============================================================================================================================;
 	WEnd
 EndFunc   ;==>_runBot
 
@@ -383,10 +550,12 @@ Func Idle() ;Sequence that runs until Full Army
 	Local $TimeIdle = 0 ;In Seconds
 	If $debugsetlog = 1 Then SetLog("Func Idle ", $COLOR_PURPLE)
 
-	While $fullArmy = False Or $bFullArmyHero = False Or $bFullArmySpells = False
+    While $IsFullArmywithHeroesAndSpells = False
 		checkAndroidTimeLag()
 
-		If $RequestScreenshot = 1 Then PushMsg("RequestScreenshot")
+		If $RequestScreenshot = 1 Then PushMsgToPushBullet("RequestScreenshot")
+		If $RequestBuilderInfo = 1 Then PushMsgToPushBullet("BuilderInfo")
+		If $RequestShieldInfo = 1 Then PushMsgToPushBullet("ShieldInfo")
 		If _Sleep($iDelayIdle1) Then Return
 		If $CommandStop = -1 Then SetLog("====== Waiting for full army ======", $COLOR_GREEN)
 		Local $hTimer = TimerInit()
@@ -395,6 +564,12 @@ Func Idle() ;Sequence that runs until Full Army
 		While $iReHere < 7
 			$iReHere += 1
 			DonateCC(True)
+			;Modify Chat by TheRevenor ===============================================
+			If $iReHere = 6 Then
+				CheckNewChat()
+				If _Sleep(500) Then Return
+				ChatbotMessage()
+			EndIf
 			If _Sleep($iDelayIdle2) Then ExitLoop
 			If $Restart = True Then ExitLoop
 		WEnd
@@ -437,6 +612,13 @@ Func Idle() ;Sequence that runs until Full Army
 		$iCollectCounter = $iCollectCounter + 1
 		If $CommandStop = -1 Then
 			Train()
+			;If ($iEnableSpellsWait[$iMatchMode] = 1 Or GUICtrlRead($chkDBKingWait) = $GUI_CHECKED Or GUICtrlRead($chkDBQueenWait) = $GUI_CHECKED Or _
+			;			GUICtrlRead($chkDBWardenWait) = $GUI_CHECKED Or GUICtrlRead($chkABKingWait) = $GUI_CHECKED Or GUICtrlRead($chkABQueenWait) = $GUI_CHECKED Or _
+			;			GUICtrlRead($chkABWardenWait) = $GUI_CHECKED) Then
+			;	GetReadTimeHeroesAndSpell()
+			;	ClickP($aAway, 1, 0, "#0000") ;Click Away
+			;	Sleep(1500)
+			;EndIf
 				If $Restart = True Then ExitLoop
 				If _Sleep($iDelayIdle1) Then ExitLoop
 				checkMainScreen(False)
@@ -468,9 +650,9 @@ Func Idle() ;Sequence that runs until Full Army
 
 		If $canRequestCC = True Then RequestCC()
 
-		If $CurCamp >=  $TotalCamp * $iEnableAfterArmyCamps[$DB]/100 and $iEnableSearchCamps[$DB]  = 1 Then Exitloop
-		If $CurCamp >=  $TotalCamp * $iEnableAfterArmyCamps[$LB]/100 and $iEnableSearchCamps[$LB]  = 1 Then Exitloop
-		If $CurCamp >=  $TotalCamp * $iEnableAfterArmyCamps[$TS]/100 and $iEnableSearchCamps[$TS]  = 1 Then Exitloop
+        If $CurCamp >=  $TotalCamp * $iEnableAfterArmyCamps[$DB]/100 and $iEnableSearchCamps[$DB]  = 1 and IsSearchModeActive($DB) Then Exitloop
+        If $CurCamp >=  $TotalCamp * $iEnableAfterArmyCamps[$LB]/100 and $iEnableSearchCamps[$LB]  = 1 and IsSearchModeActive($LB) Then Exitloop
+        If $CurCamp >=  $TotalCamp * $iEnableAfterArmyCamps[$TS]/100 and $iEnableSearchCamps[$TS]  = 1 and IsSearchModeActive($TS) Then Exitloop
 
 		SetLog("Time Idle: " & StringFormat("%02i", Floor(Floor($TimeIdle / 60) / 60)) & ":" & StringFormat("%02i", Floor(Mod(Floor($TimeIdle / 60), 60))) & ":" & StringFormat("%02i", Floor(Mod($TimeIdle, 60))))
 
@@ -479,8 +661,16 @@ Func Idle() ;Sequence that runs until Full Army
 
 		If $iChkSnipeWhileTrain = 1 Then SnipeWhileTrain()  ;snipe while train
 
-		If $CommandStop = -1 Then ; Check if closing bot/emulator while training and not in halt mode
-			SmartWait4Train()
+		If $CommandStop = -1 Then 
+			SmartWait4Train()  ; Check if closing bot/emulator while training and not in halt mode
+			If ($ichkCloseWaitEnable = 1 And $iEnableSpellsWait[$iMatchMode] = 1 Or GUICtrlRead($chkDBKingWait) = $GUI_CHECKED Or GUICtrlRead($chkDBQueenWait) = $GUI_CHECKED Or _
+						GUICtrlRead($chkDBWardenWait) = $GUI_CHECKED Or GUICtrlRead($chkABKingWait) = $GUI_CHECKED Or GUICtrlRead($chkABQueenWait) = $GUI_CHECKED Or _
+						GUICtrlRead($chkABWardenWait) = $GUI_CHECKED) Then
+				If _Sleep(2000) Then return
+				GetReadTimeHeroesAndSpell()
+				ClickP($aAway, 1, 0, "#0000") ;Click Away
+				If _Sleep(1500) Then Return
+			EndIf
 			If $Restart = True Then ExitLoop ; if smart wait activated, exit to runbot in case user adjusted GUI or left emulator/bot in bad state
 		EndIf
 
@@ -490,7 +680,7 @@ EndFunc   ;==>Idle
 Func AttackMain() ;Main control for attack functions
 	;LoadAmountOfResourcesImages() ; for debug
 	If IsSearchAttackEnabled() Then
-		If (IsSearchModeActive($DB) And checkCollectors(True, False)) or IsSearchModeActive($LB) or IsSearchModeActive($TS) Then
+		If IsSearchModeActive($DB) or IsSearchModeActive($LB) or IsSearchModeActive($TS) Then ; fix no collectors are selected warning error
 			If $iChkUseCCBalanced = 1 or $iChkUseCCBalancedCSV = 1 Then ;launch profilereport() only if option balance D/R it's activated
 				ProfileReport()
 				If _Sleep($iDelayAttackMain1) Then Return
@@ -508,6 +698,15 @@ Func AttackMain() ;Main control for attack functions
 				SetLog(_PadStringCenter(" Hero status check" & BitAND($iHeroAttack[$LB], $iHeroWait[$LB], $iHeroAvailable) & "|" & $iHeroWait[$LB] & "|" & $iHeroAvailable, 54, "="), $COLOR_PURPLE)
 				;Setlog("BullyMode: " & $OptBullyMode & ", Bully Hero: " & BitAND($iHeroAttack[$iTHBullyAttackMode], $iHeroWait[$iTHBullyAttackMode], $iHeroAvailable) & "|" & $iHeroWait[$iTHBullyAttackMode] & "|" & $iHeroAvailable, $COLOR_PURPLE)
 			EndIf
+			If $ichkSwitchDonate = 1 Then
+				If $iPlannedRequestCCHoursEnable = 0 Then
+					$iPlannedRequestCCHoursEnable = 1
+					GUICtrlSetState($chkRequestCCHours, $GUI_CHECKED)
+					SetLog(" » Force Enable RequestCC Troops", $COLOR_ORANGE)
+				EndIf
+				RequestCC()
+				_Sleep($iDelayRunBot4)
+			EndIf
 			PrepareSearch()
 				If $OutOfGold = 1 Then Return ; Check flag for enough gold to search
 				If $Restart = True Then Return
@@ -520,10 +719,15 @@ Func AttackMain() ;Main control for attack functions
 				If $Restart = True Then Return
 			ReturnHome($TakeLootSnapShot)
 				If _Sleep($iDelayAttackMain2) Then Return
+				$iMultyFarming = 1
 			Return True
 		Else
 			Setlog("No one of search condition match:", $COLOR_BLUE)
 			Setlog("Waiting on troops, heroes and/or spells according to search settings", $COLOR_BLUE)
+			GetReadTimeHeroesAndSpell()
+			ClickP($aAway, 1, 0, "#0000") ;Click Away
+			Sleep(1500)
+			$iMultyFarming = 0
 		EndIf
 	Else
 		SetLog("Attacking Not Planned, Skipped..", $COLOR_RED)
@@ -597,28 +801,27 @@ Func _RunFunction($action)
 			ReportNotify()
 			_Sleep($iDelayRunBot3)
 		Case "DonateCC"
+			IsWaitingForConnection()
 			DonateCC()
 			If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
-		Case "DonateCC,Train"
-			DonateCC()
-			If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
-			Train()
-			_Sleep($iDelayRunBot1)
 		Case "BoostBarracks"
 			BoostBarracks()
-		Case "BoostSpellFactory"
+			BoostDarkBarracks()
+		Case "BoostSpellFactories"
 			BoostSpellFactory()
-		Case "BoostDarkSpellFactory"
+			If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
 			BoostDarkSpellFactory()
-		Case "BoostKing"
+		Case "BoostHeroes"
 			BoostKing()
-		Case "BoostQueen"
+			If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
 			BoostQueen()
-		Case "BoostWarden"
+			If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
 			BoostWarden()
 		Case "RequestCC"
-			RequestCC()
-			If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
+			If $ichkSwitchDonate = 0 Then
+				RequestCC()
+				If _Sleep($iDelayRunBot1) = False Then checkMainScreen(False)
+			EndIf
 		Case "Laboratory"
 			Laboratory()
 			If _Sleep($iDelayRunBot3) = False Then checkMainScreen(False)

@@ -46,7 +46,8 @@ $frmBotEx = GUICreate("", $_GUI_MAIN_WIDTH, $_GUI_MAIN_HEIGHT - $_GUI_BOTTOM_HEI
 GUICtrlCreateLabel("", 0, 0, $_GUI_MAIN_WIDTH, 5)
 GUICtrlSetBkColor(-1, $COLOR_WHITE)
 Local $sLogoPath = @ScriptDir & "\Images\logo.jpg"
-$frmBot_MAIN_PIC = _GUICtrlCreatePic(@ScriptDir & "\Images\logo.jpg", 0, $_GUI_MAIN_TOP, $_GUI_MAIN_WIDTH, 80)
+;$frmBot_MAIN_PIC = _GUICtrlCreatePic(@ScriptDir & "\Images\logo.jpg", 0, $_GUI_MAIN_TOP, $_GUI_MAIN_WIDTH, 80)
+$frmBot_MAIN_PIC = _GUICtrlCreatePic(@ScriptDir & "\Images\logo.jpg", 0, 0, $_GUI_MAIN_WIDTH, 80)
 $hToolTip = _GUIToolTip_Create($frmBot) ; tool tips for URL links etc
 _GUIToolTip_SetMaxTipWidth($hToolTip, $_GUI_MAIN_WIDTH) ; support multiple lines
 
@@ -92,6 +93,9 @@ SplashStep(GetTranslated(500, 27, "Loading Attack tab..."))
 #include "GUI\MBR GUI Design Child Attack.au3"
 SplashStep(GetTranslated(500, 28, "Loading Bot tab..."))
 #include "GUI\MBR GUI Design Child Bot.au3"
+;Tab MOD
+SplashStep("Loading MOD tab...")
+#include "GUI\MBR GUI Design Child Mod.au3"
 ;GUISetState()
 GUISwitch($frmBotEx)
 $tabMain = GUICtrlCreateTab(5, 85 + $_GUI_MAIN_TOP, $_GUI_MAIN_WIDTH - 9, $_GUI_MAIN_HEIGHT - 225); , $TCS_MULTILINE)
@@ -100,6 +104,7 @@ $tabGeneral = GUICtrlCreateTabItem(GetTranslated(600,1, "Log"))
 $tabVillage = GUICtrlCreateTabItem(GetTranslated(600,2, "Village")) ; Village
 $tabAttack = GUICtrlCreateTabItem(GetTranslated(600,3,"Attack Plan"))
 $tabBot = GUICtrlCreateTabItem(GetTranslated(600,4,"Bot"))
+$tabMOD = GUICtrlCreateTabItem("MOD")
 
 ;~ -------------------------------------------------------------
 ;~ About Us Tab
@@ -193,6 +198,7 @@ Bind_ImageList($hGUI_ACTIVEBASE_TAB)
 Bind_ImageList($hGUI_AttackOption_TAB)
 Bind_ImageList($hGUI_THSNIPE_TAB)
 Bind_ImageList($hGUI_BOT_TAB)
+Bind_ImageList($hGUI_MOD_TAB)
 Bind_ImageList($hGUI_STRATEGIES_TAB)
 Bind_ImageList($hGUI_STATS_TAB)
 #EndRegion ; Bind Icon images to all Tabs in all GUI windows (main and children)

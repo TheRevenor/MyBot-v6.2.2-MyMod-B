@@ -231,6 +231,7 @@ Func SmartWait4Train()
 		; immediately after Guard shield expires when you have no grace time.  Feature required to avoid losing trophy when trophy pushing
 		$iShieldTime -= 45
 	EndIf
+	If $ichkCloseWaitTrain = 1 And $iTrainWaitTime >= 121 Then
 	If $iShieldTime > 0 Then
 		$iDiffTime = $iShieldTime - ($iTrainWaitTime) ; Find difference between train and shield time easy way?
 		If $debugsetlogTrain = 1 Or $debugSetlog = 1 Then Setlog("Time Train:Shield:Diff " & ($iTrainWaitTime) & ":" & $iShieldTime & ":" & $iDiffTime, $COLOR_PURPLE)
@@ -263,6 +264,14 @@ Func SmartWait4Train()
 		Next
 	Else
 		If $debugsetlogTrain = 1 Or $debugSetlog = 1 Then Setlog("Troop training with time remaining not enabled, skip SmartWait game exit", $COLOR_PURPLE)
+	EndIf
+
+	ElseIf $ichkCloseWaitTrain = 1 And $iTrainWaitTime <= 120 Then
+		Setlog("Waiting time < 2.00 Minutes, Not Close CoC Just Wait!", $COLOR_BLUE)
+		Setlog("Waiting time= " & StringFormat("%.2f", $iTrainWaitTime / 60) & " Minutes", $COLOR_BLUE)
+		; Just wait without close the CoC
+		;WaitnOpenCoC($iTrainWaitTime * 1000, True, False)
+		_SleepStatus($iTrainWaitTime * 1000)
 	EndIf
 
 EndFunc   ;==>SmartWait4Train

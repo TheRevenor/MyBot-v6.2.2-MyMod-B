@@ -218,13 +218,29 @@ Func VillageSearch() ;Control for searching a village that meets conditions
 			SetLog($GetResourcesTXT, $COLOR_GREEN, "Lucida Console", 7.5)
 			SetLog("      " & "Dead Base Found!", $COLOR_GREEN, "Lucida Console", 7.5)
 			$logwrited = True
-			$iMatchMode = $DB
-			If $debugDeadBaseImage = 1 Then
+;============================================== Check Collectors Outside ==============================================
+			If $ichkDBMeetCollOutside = 1 Then
+				If AreCollectorsOutside($iDBMinCollOutsidePercent) Then
+					SetLog("Collectors are outside, match found !", $COLOR_GREEN, "Lucida Console", 7.5)
+					$iMatchMode = $DB
+					If $debugDeadBaseImage = 1 Then
+					_CaptureRegion()
+					_GDIPlus_ImageSaveToFile($hBitmap, @ScriptDir & "\Zombies\" & $Date & " at " & $Time & ".png")
+					_WinAPI_DeleteObject($hBitmap)
+					EndIf
+			ExitLoop
+				Else
+					SetLog("Collectors are not outside, skipping search !", $COLOR_RED, "Lucida Console", 7.5)
+				EndIf
+			Else
+				$iMatchMode = $DB
+				If $debugDeadBaseImage = 1 Then
 				_CaptureRegion()
 				_GDIPlus_ImageSaveToFile($hBitmap, @ScriptDir & "\Zombies\" & $Date & " at " & $Time & ".png")
 				_WinAPI_DeleteObject($hBitmap)
-			EndIf
+				EndIf
 			ExitLoop
+			EndIf
 		ElseIf $match[$LB] And Not $dbBase  Then
 			SetLog($GetResourcesTXT, $COLOR_GREEN, "Lucida Console", 7.5)
 			SetLog("      " & "Live Base Found!", $COLOR_GREEN, "Lucida Console", 7.5)
@@ -271,7 +287,7 @@ Func VillageSearch() ;Control for searching a village that meets conditions
 		If $noMatchTxt <> "" Then
 			;SetLog(_PadStringCenter(" " & StringMid($noMatchTxt, 3) & " ", 50, "~"), $COLOR_PURPLE)
 			SetLog($GetResourcesTXT, $COLOR_BLACK, "Lucida Console", 7.5)
-			SetLog("      " & StringMid($noMatchTxt, 3), $COLOR_BLACK, "Lucida Console", 7.5)
+			SetLog("      " & StringMid($noMatchTxt, 3), $COLOR_ORANGE, "Lucida Console", 7.5)
 			$logwrited = True
 		EndIf
 
@@ -320,7 +336,7 @@ Func VillageSearch() ;Control for searching a village that meets conditions
 					$iNbrOfOoS += 1
 					UpdateStats()
 					SetLog("Couldn't locate Next button", $COLOR_RED)
-					PushMsg("OoSResources")
+					PushMsgToPushBullet("OoSResources")
 				Else
 					SetLog("Have strange problem Couldn't locate Next button, Restarting CoC and Bot...", $COLOR_RED)
 					$Is_ClientSyncError = False ; disable fast OOS restart if not simple error and try restarting CoC
@@ -372,15 +388,15 @@ Func VillageSearch() ;Control for searching a village that meets conditions
 	;--- write in log match found ----
 	If $AlertSearch = 1 Then
 		TrayTip($sModeText[$iMatchMode] & " Match Found!", "Gold: " & $searchGold & "; Elixir: " & $searchElixir & "; Dark: " & $searchDark & "; Trophy: " & $searchTrophy, "", 0)
-		If FileExists(@WindowsDir & "\media\Festival\Windows Exclamation.wav") Then
-			SoundPlay(@WindowsDir & "\media\Festival\Windows Exclamation.wav", 1)
+		If FileExists(@WindowsDir & "\media\Sonata\Windows Logoff Sound.wav") Then
+			SoundPlay(@WindowsDir & "\media\Sonata\Windows Logoff Sound.wav", 1)
 		ElseIf FileExists(@WindowsDir & "\media\Windows Exclamation.wav") Then
 			SoundPlay(@WindowsDir & "\media\Windows Exclamation.wav", 1)
 		EndIf
 	EndIf
 
 	SetLog(_PadStringCenter(" Search Complete ", 50, "="), $COLOR_BLUE)
-	PushMsg("MatchFound")
+	PushMsgToPushBullet("MatchFound")
 
 
 ;~ 	; --- TH Detection Check Once Conditions ---

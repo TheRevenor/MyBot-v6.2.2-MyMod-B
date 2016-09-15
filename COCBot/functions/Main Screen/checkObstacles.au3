@@ -38,13 +38,13 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 			;_ImageSearchArea($device, 0, 237, 321 + $midOffsetY, 293, 346 + $midOffsetY, $x, $y, 80) Then
 			If $sTimeWakeUp > 3600 Then
 				SetLog("Another Device has connected, waiting " & Floor(Floor($sTimeWakeUp / 60) / 60) & " hours " & Floor(Mod(Floor($sTimeWakeUp / 60), 60)) & " minutes " & Floor(Mod($sTimeWakeUp, 60)) & " seconds", $COLOR_RED)
-				PushMsg("AnotherDevice3600")
+				PushMsgToPushBullet("AnotherDevice3600")
 			ElseIf $sTimeWakeUp > 60 Then
 				SetLog("Another Device has connected, waiting " & Floor(Mod(Floor($sTimeWakeUp / 60), 60)) & " minutes " & Floor(Mod($sTimeWakeUp, 60)) & " seconds", $COLOR_RED)
-				PushMsg("AnotherDevice60")
+				PushMsgToPushBullet("AnotherDevice60")
 			Else
 				SetLog("Another Device has connected, waiting " & Floor(Mod($sTimeWakeUp, 60)) & " seconds", $COLOR_RED)
-				PushMsg("AnotherDevice")
+				PushMsgToPushBullet("AnotherDevice")
 			EndIf
 			If _SleepStatus($sTimeWakeUp * 1000) Then Return ; Wait as long as user setting in GUI, default 120 seconds
 			checkObstacles_ReloadCoC($aReloadButton, "#0127")
@@ -57,7 +57,7 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 		;If _ImageSearchArea($break, 0, 165, 257 + $midOffsetY, 335, 295 + $midOffsetY, $x, $y, 100) Then ; used for all 3 different break messages
 		If _ImageSearchAreaImgLoc($break, 0, 165, 257 + $midOffsetY, 335, 295 + $midOffsetY, $x, $y, 95) Then ; used for all 3 different break messages
 			SetLog("Village must take a break, wait ...", $COLOR_RED)
-			PushMsg("TakeBreak")
+			PushMsgToPushBullet("TakeBreak")
 			If _SleepStatus($iDelaycheckObstacles4) Then Return ; 2 Minutes
 			checkObstacles_ReloadCoC($aReloadButton, "#0128");Click on reload button
 			If $ichkSinglePBTForced = 1 Then $bGForcePBTUpdate = True
@@ -86,6 +86,7 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 					Return True
 				EndIf
 				SetLog("Connection lost, Reloading CoC...", $COLOR_RED)
+				ChckInetCon()
 			Case _CheckPixel($aIsCheckOOS, $bNoCapturePixel) ; Check OoS
 				SetLog("Out of Sync Error, Reloading CoC...", $COLOR_RED)
 			Case _CheckPixel($aIsMaintenance, $bNoCapturePixel) ; Check Maintenance
@@ -118,7 +119,7 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 				checkObstacles_ResetSearch()
 			Case Else
 				;  Add check for misc error messages
-				If $debugImageSave = 1 Then DebugImageSave("ChkObstaclesReloadMsg_") ; debug only
+				If $debugImageSave = 1 Then DebugImageSave("ChkObstaclesReloadMsg_")  ; debug only
 				$result = getOcrMaintenanceTime(171, 325 + $midOffsetY, "Check Obstacles OCR 'Good News!'=") ; OCR text for "Good News!"
 				If StringInStr($result, "new", $STR_NOCASESENSEBASIC) Then
 					SetLog("Game Update is required, Bot must stop!!", $COLOR_RED)
@@ -126,7 +127,7 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 					Return True
 				EndIf
 				$result = getOcrRateCoc(228, 380 + $midOffsetY)
-				If $debugsetlog = 1 Then SetLog("Check Obstacles getOCRRateCoC=" & $result, $COLOR_PURPLE) ; debug only
+				If $debugsetlog = 1 Then SetLog("Check Obstacles getOCRRateCoC= " & $result, $COLOR_PURPLE)  ; debug only
 				If StringInStr($result, "never", $STR_NOCASESENSEBASIC) Then
 					SetLog("Clash feedback window found, permanently closed!", $COLOR_RED)
 					PureClick(248, 408 + $midOffsetY, 1, 0, "#9999") ; Click on never to close window and stop reappear. Never=248,408 & Later=429,408
@@ -166,6 +167,11 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 	EndIf
 	If _CheckPixel($aIsMainGrayed, $bNoCapturePixel) Then
 		PureClickP($aAway, 1, 0, "#0133") ;Click away If things are open
+		If _Sleep(1000) Then Return
+		If _ColorCheck(_GetPixelColor(383, 405), Hex(0xF0BE70, 6), 20) Then
+			SetLog("Found Window Load Click Cancel", $COLOR_RED)
+			PureClick(354, 435, 1, 0, "Click Cancel") ;Click Cancel Button
+		EndIf
 		$MinorObstacle = True
 		If _Sleep($iDelaycheckObstacles1) Then Return
 		Return False
@@ -200,7 +206,7 @@ Func checkObstacles() ;Checks if something is in the way for mainscreen
 	;If _ImageSearchArea($CocStopped, 0, 250, 328 + $midOffsetY, 618, 402 + $midOffsetY, $x, $y, 70) Then
 	If _ImageSearchAreaImgLoc($CocStopped, 0, 250, 328 + $midOffsetY, 618, 402 + $midOffsetY, $x, $y, 95) Then
 		SetLog("CoC Has Stopped Error .....", $COLOR_RED)
-		PushMsg("CoCError")
+		PushMsgToPushBullet("CoCError")
 		If _Sleep($iDelaycheckObstacles1) Then Return
 		PureClick(250 + $x, 328 + $midOffsetY + $y, 1, 0, "#0129");Check for "CoC has stopped error, looking for OK message" on screen
 		If _Sleep($iDelaycheckObstacles2) Then Return

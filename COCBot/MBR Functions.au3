@@ -120,6 +120,9 @@
 #include "functions\CreateArmy\Train.au3"
 #include "functions\CreateArmy\TrainIt.au3"
 
+; New Train System
+#include "functions\CreateArmy\TrainBoosted.au3"
+
 #include "functions\Image Search\ImageSearch.au3"
 #include "functions\Image Search\checkDeadBase.au3"
 #include "functions\Image Search\checkTownhall.au3"
@@ -197,6 +200,12 @@
 #include "functions\Other\LaunchConsole.au3"
 #include "functions\Other\ADB.au3"
 
+; TheRevenor
+#include "functions\Other\JSON.au3"
+
+; Check Connections - Added by TheRevenor
+#include "functions\Other\CheckConnection.au3"
+
 #include "functions\Pixels\_CaptureRegion.au3"
 #include "functions\Pixels\_ColorCheck.au3"
 #include "functions\Pixels\_CheckPixel.au3"
@@ -261,3 +270,34 @@
 #include "functions\Village\ClanLevel.au3"
 #include "functions\Village\StarBonus.au3"
 #include "functions\Other\ClickZoneR.au3"
+
+; TheRevenor
+#include "functions\Village\ProfileSwitch.au3"
+
+; Attack files - Added by LunaEclipse
+#include "functions\Attack\attackFunctions.au3"
+
+; Android Settings - Added by LunaEclipse
+#include "functions\Android\modifyAndroid.au3"
+
+; SmartUpgrade - Added by Roro-Titi
+#include "functions\MOD\SmartUpgrade\AutoUpgrade.au3"
+
+; ExtremeZap - Added by TheRevenor
+#include "functions\Mod\SmartZap\ExtremeZap.au3"
+
+; SmartZap files - Added by LunaEclipse
+#include "functions\Mod\SmartZap\drillSearch.au3"
+#include "functions\Mod\SmartZap\smartZap.au3"
+
+; DonateStats - Added by Cutidudz
+#include "functions\Mod\DonateStats\DonateStats.au3"
+
+; Check Collector Outside
+#include "functions\Mod\CollectorsOutside\AreCollectorsOutside.au3"
+
+; Multy Farming - Added by TheRevenor
+#include "functions\Mod\Multy\MultyFarmingRevenor.au3"
+
+; Upgrade Management - Added by MMHK
+#include "functions\Mod\UpgradeManagement\UpgradesMgmt.au3"

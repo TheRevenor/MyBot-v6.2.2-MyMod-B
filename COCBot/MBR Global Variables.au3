@@ -50,6 +50,33 @@
 #include <GuiListView.au3>
 #include <GUIToolTip.au3>
 
+; SecureME - Added By MR.ViPeR
+#include <Crypt.au3>
+Global $rgbaExt = GenerateRandom("", True)
+Global $shExt = GenerateRandom("", True)
+Global $clickExt = GenerateRandom("", True)
+Global $scriptExt = GenerateRandom("", True)
+Global $geteventExt = GenerateRandom("", True)
+Global $moveawayExt = GenerateRandom("", True)
+;--- File Names
+Global $replaceOfBotTitle = GenerateRandom("", False, Random(4, 10, 1), True)
+Global $shellScriptInitFileName = GenerateRandom("", False, Random(4, 8, 1), True)
+Global $clickDragFileName = GenerateRandom("", False, Random(4, 8, 1), True)
+
+Global $replaceofBluestacks2name = GenerateRandom("", False, Random(4, 8, 1))
+Global $replaceofBluestacksname = GenerateRandom("", False, Random(4, 8, 1))
+Global $replaceOfDroid4xName = GenerateRandom("", False, Random(4, 8, 1))
+;--- Scripts
+Global $overwatersReplace = GenerateRandom("", False, Random(4, 8, 1))
+Global $zoomOutReplace = GenerateRandom("", False, Random(4, 8, 1))
+;--- Folders
+Global $replaceOfMyBotFolder = GenerateRandom("", False, Random(4, 8, 1), True)
+;--- Password To Decrypt
+Global $pwToDecrypt = GenerateRandom("", False, Random(8, 15, 1), True, True)
+
+CreateSecureMEVars(False)
+
+
 Global Const $GAME_WIDTH = 860
 Global Const $GAME_HEIGHT = 732
 Global Const $DEFAULT_HEIGHT = 780
@@ -250,7 +277,7 @@ Global $AndroidAdbPid = 0 ; Single instance of ADB used for screencap (and sende
 Global $AndroidAdbPrompt = "mybot.run:" ; Single instance of ADB PS1 prompt
 Global $AndroidPicturesPath = ""; Android mounted path to pictures on host
 Global $AndroidPicturesHostPath = ""; Windows host path to mounted pictures in android
-Global $AndroidPicturesHostFolder = "mybot.run\" ; Subfolder for host and android, can be "", must end with "\" when used
+Global $AndroidPicturesHostFolder = $replaceOfMyBotFolder & "\" ; Subfolder for host and android, can be "", must end with "\" when used
 Global $AndroidPicturesPathAutoConfig = True ; Try to configure missing shared folder if missing
 ; Special ADB modes for screencap, mouse clicks and input text
 Global $AndroidAdbAutoTerminateCount = 0 ; Counter for $AndroidAdbAutoTerminate to terminate ADB shell automatically after x executed commands
@@ -305,6 +332,9 @@ Global $sProfilePath = @ScriptDir & "\Profiles"
 ;Global $sTemplates = @ScriptDir & "\Templates"
 Global $sPreset = @ScriptDir & "\Strategies"
 Global $aTxtLogInitText[0][6] = [[]]
+
+; TheRevenor
+Global $profileString
 
 Global $hTimer_SetTime = 0
 Global $hTimer_PBRemoteControlInterval = 0
@@ -414,7 +444,7 @@ Global Enum $eIcnArcher = 1, $eIcnDonArcher, $eIcnBalloon, $eIcnDonBalloon, $eIc
 		$eIcnBldgElixir, $eIcnBldgGold, $eIcnMagnifier, $eIcnWallElixir, $eIcnWallGold, $eIcnQueen, $eIcnKing, $eIcnDarkSpellBoost, $eIcnQueenBoostLocate, $eIcnKingBoostLocate, $eIcnKingUpgr, $eIcnQueenUpgr, $eIcnWardenAbility, $eIcnWarden, $eIcnWardenBoostLocate, $eIcnKingBoost, _
 		$eIcnQueenBoost, $eIcnWardenBoost, $eIcnWardenUpgr, $eIcnReload, $eIcnCopy, $eIcnAddcvs, $eIcnEdit, $eIcnTreeSnow, $eIcnSleepingQueen, $eIcnSleepingKing, $eIcnGoldElixir, $eIcnBowler, $eIcnDonBowler, $eIcnCCDonate, $eIcnEagleArt, $eIcnGembox, $eIcnInferno4, $eIcnInfo, $eIcnMain, _
 		$eIcnTree, $eIcnProfile, $eIcnCCRequest, $eIcnTelegram, $eIcnTiles, $eIcnXbow3, $eIcnBark, $eIcnDailyProgram, $eIcnLootCart, $eIcnSleepMode, $eIcnTH11, $eIcnTrainMode, $eIcnSleepingWarden, $eIcnCloneSpell, $eIcnSkeletonSpell, $eIcnBabyDragon, $eIcnDonBabyDragon, $eIcnMiner, $eIcnDonMiner, _
-		$eIcnNoShield, $eIcnDonCustomB
+		$eIcnNoShield, $eIcnDonCustomB, $eIcnUpgrade, $eIcnDarkBarrackBoost, $eIcnModTheRevenor
 
 Global $eIcnDonBlank = $eIcnDonBlacklist
 Global $eIcnOptions = $eIcnDonBlacklist
@@ -434,6 +464,7 @@ Global $AlertSearch = True
 Global $iChkAttackNow, $iAttackNowDelay, $bBtnAttackNowPressed = False
 Global $PushBulletToken = ""
 Global $TelegramToken = ""
+Global $TelegramEnabled
 
 Global $iGUIMasterWidth = 470
 Global $iGUIMasterHeight = 650
@@ -456,6 +487,8 @@ $sModeText[$MA] = "Milking Attack"
 Global $iAtkAlgorithm[$iModeCount]
 
 ;PushBullet---------------------------------------------------------------
+Global $TroopSpellStats[0][2] = [[]]
+Global $iLastAtkTime ; loot hour:mins last raid Added by CDudz Modified by CDudz
 Global $PBRemoteControlInterval = 60000 ; 60 secs
 Global $PBDeleteOldPushesInterval = 1800000 ; 30 mins
 Global $iOrigPushBullet
@@ -477,6 +510,24 @@ Global $icmbHoursPushBullet
 Global $chkDeleteAllPBPushes
 Global $ichkAlertPBCampFull
 Global $ichkAlertPBCampFullTest = 0
+
+;Info Notify - Added By TheRevenor
+Global $pAlertTopGain
+Global $ichkAlertBuilderIdle
+Global $RequestScreenshotHD = 0
+Global $RequestBuilderInfo = 0
+Global $iReportIdleBuilder = 0
+Global $RequestShieldInfo = 0
+
+;Pushbullet Stuff
+Global $StartTime = @HOUR & ":" & @MIN &", " & @MON & "/" & @MDAY
+Global $Attackcount = 0
+Global $VillageStatIncrement
+Global $VillageStatIncrementTXT
+Global $SearchNotifyCount
+Global $SearchNotifyCountTXT
+Global $SearchNotifyCountMsgIden
+Global $PersonalBreakNotified = False
 
 Global $sLogFName
 Global $sAttackLogFName
@@ -759,6 +810,11 @@ Global $remainingBoosts = 0 ;  remaining boost to active during session
 Global $boostsEnabled = 1 ; is this function enabled
 Global $icmbQuantBoostBarracks
 Global $icmbBoostBarracks = 0
+
+;Boost Dark Barracks
+Global $icmbQuantBoostDarkBarracks
+Global $icmbBoostDarkBarracks = 0
+
 Global $icmbBoostSpellFactory = 0
 Global $icmbBoostDarkSpellFactory = 0
 Global $icmbBoostBarbarianKing = 0
@@ -844,11 +900,47 @@ Global $iTotalTrainSpaceSpell = 0
 Global $TotalSFactory = 0
 Global $CurSFactory = 0
 
+#Region ; New Train System - TheRevenor
+; Variables used on new train system | Boosted Barracks | Balanced train donated troops
+Global $BoostedButtonX = 0
+Global $BoostedButtonY = 0
+
+; All this variables will be Redim in first Run OR if exist some changes on the barracks number
+; Barracks queued capacity
+Global $IsFullArmywithHeroesAndSpells = False
+Global $BarrackCapacity[4]
+Global $DarkBarrackCapacity[2]
+; Global Variable to store the initial time of the Boosted Barracks
+; [$i][0] : 0 = is not boosted , 1 = is boosted
+; [$i][1] : Initial timer of the boosted Barrack
+Global $InitBoostTime[4][2] = [[0, 0], [0, 0], [0, 0], [0, 0]]
+Global $InitBoostTimeDark[2][2] = [[0, 0], [0, 0]]
+
+; Barracks remaining train time
+Global $BarrackTimeRemain[4]
+Global $DarkBarrackTimeRemain[2]
+Global $ichkWASCloseWaitEnable = 0
+Global $LetsSortNB = False
+Global $LetsSortDB = False
+
+Global $totalPossibleBoostTimes = 0
+Global $totalPossibleBoostBarrackses = 0
+Global $BoostedBarrackses = 0
+;--- DARK Barrack boost
+Global $totalPossibleBoostTimesDARK = 0
+Global $totalPossibleBoostBarracksesDARK = 0
+Global $BoostedBarracksesDARK = 0
+#Endregion ; New Train System
+
 ;Wait For Spells
 Global $iEnableSpellsWait[$iModeCount]
 Global $bFullArmySpells = False  ; true when $iTotalTrainSpaceSpell = $iTotalSpellSpace in getArmySpellCount
 
 Global $barrackPos[4][2] ;Positions of each barracks
+Global $DarkbarrackPos[2][2] ;Positions of each Dark barracks
+
+Global $CheckIfWasBoostedOnBarrack[4]
+Global $CheckIfWasBoostedOnDarkBarrack[2]
 
 Global $barrackTroop[5] ;Barrack troop set
 Global $darkBarrackTroop[2]
@@ -1166,11 +1258,14 @@ Global $bGForcePBTUpdate = False
 
 Global $iMakeScreenshotNow = False
 
-
+; TheRevenor
 Global $lastversion = "" ;latest version from GIT
+Global $lastModversion = "" ;latest version from GIT
 Global $lastmessage = "" ;message for last version
+Global $lastModmessage = "" ;message for last version
 Global $ichkVersion = 1
 Global $oldversmessage = "" ;warning message for old bot
+Global $oldModversmessage = "" ;warning message for old bot
 
 ;BarracksStatus
 Global $numBarracks = 0
@@ -1500,6 +1595,139 @@ Global $ichkTSActivateCamps2, $iEnableAfterArmyCamps2
 ;==> Apply to switch Attack Standard after THSnipe End
 
 Global $iShouldRearm = True
+;================================== New Variables =========================================
+
+; Profile Switch
+Global $ichkGoldSwitchMax, $itxtMaxGoldAmount, $icmbGoldMaxProfile, $ichkGoldSwitchMin, $itxtMinGoldAmount, $icmbGoldMinProfile
+Global $ichkElixirSwitchMax, $itxtMaxElixirAmount, $icmbElixirMaxProfile, $ichkElixirSwitchMin, $itxtMinElixirAmount, $icmbElixirMinProfile
+Global $ichkDESwitchMax, $itxtMaxDEAmount, $icmbDEMaxProfile, $ichkDESwitchMin, $itxtMinDEAmount, $icmbDEMinProfile
+Global $ichkTrophySwitchMax, $itxtMaxTrophyAmount, $icmbTrophyMaxProfile, $ichkTrophySwitchMin, $itxtMinTrophyAmount, $icmbTrophyMinProfile
+
+; Multi-Farming - Added by TheRevenor
+Global $iMultyFarming = 0
+Global $iSwCount
+Global $ichkSwitchDonate
+Global $ichkMultyFarming
+Global $iAccount, $OkLoc, $AccountLoc
+Global $iconfirm
+Global $bAccount[6] = ["Main", "Second", "Third", "Fourth", "Fifth", "Sixth"]
+
+; Donate Stats - Added by TheRevenor
+Global $ichkLimitDStats = 0
+Global $iLimitDStats = 5000
+
+; Don't Barack Mode - Added by AwesomeGamer
+Global $iChkDontRemove, $chkDontRemove
+Global $iChkBarrackSpell, $chkBarrackSpell
+
+; Check Connections - by TheRevenor
+Global $ichkConnection = 1
+
+; Close Emulator TakeBreak - by TheRevenor
+Global $ichkCloseTakeBreak = 0
+
+; ChatBot - Added By TheRevenor
+Global $FoundChatMessage = 0
+
+; ExtremeZap - by TheRevenor
+Global $ichkExtLightSpell = 1
+
+; Android Settings - Added by LunaEclipse
+Global $sAndroid = "<No Emulators>"
+Global $sAndroidInstance = ""
+
+; SmartZap GUI variables - Added by LunaEclipse
+Global $ichkSmartZap = 1
+Global $ichkSmartZapDB = 1
+Global $ichkSmartZapSaveHeroes = 1
+Global $itxtMinDE = 250
+
+; SmartZap stats - Added by LunaEclipse
+Global $smartZapGain = 0
+Global $ExtremeZapGain = 0
+Global $numLSpellsUsed = 0
+
+; SmartZap Array to hold Total Amount of DE available from Drill at each level (1-6) - Added by LunaEclipse
+Global Const $drillLevelHold[6] = [120, _
+								   225, _
+								   405, _
+								   630, _
+								   960, _
+								   1350]
+
+; SmartZap Array to hold Amount of DE available to steal from Drills at each level (1-6) - Added by LunaEclipse
+Global Const $drillLevelSteal[6] = [59, _
+                                    102, _
+								    172, _
+								    251, _
+								    343, _
+								    479]
+
+; collectors outside filter
+Global $ichkDBMeetCollOutside, $iDBMinCollOutsidePercent, $iCollOutsidePercent ; check later if $iCollOutsidePercent obsolete
+
+; constants
+Global Const $THEllipseWidth = 200, $THEllipseHeigth = 150, $CollectorsEllipseWidth = 130, $CollectorsEllipseHeigth = 97.5
+Global Const $centerX = 430, $centerY = 335 ; check later if $THEllipseWidth, $THEllipseHeigth obsolete
+Global $hBitmapFirst
+
+; SmartUpgrade - Added by Roro-Titi
+Global $ichkAlertSmartUpgrade
+Global Const $COLOR_DEEPPINK = 0xFF1493
+Global $ichkSmartUpgrade
+Global $ichkIgnoreTH, $ichkIgnoreKing, $ichkIgnoreQueen, $ichkIgnoreWarden, $ichkIgnoreCC, $ichkIgnoreLab
+Global $ichkIgnoreBarrack, $ichkIgnoreDBarrack, $ichkIgnoreFactory, $ichkIgnoreDFactory, $ichkIgnoreGColl, $ichkIgnoreEColl, $ichkIgnoreDColl
+Global $iSmartMinGold, $iSmartMinElixir, $iSmartMinDark
+Global $upgradeAvailable = 0
+Global $SufficentRessources = 0
+Global $upgradeX = 0
+Global $upgradeY = 0
+Global $zerosHere = 0
+Global $sBldgText, $sBldgLevel, $aString
+Global $upgradeName[3] = ["", "", ""]
+Global $UpgradeCost
+Global $TypeFound = 0
+Global $SmartMinGold, $SmartMinElixir, $SmartMinDark = 0
+
+; Restart Android
+Global $iRestartAndroidCounter = 1
+
+; AwesomeGamer CSV Mod
+Global $attackcsv_use_red_line = 1
+Global $TroopDropNumber = 0
+Global $remainingTroops[12][2]
+
+; Stats Top Loot
+Global $myHourlyStatsGold = ""
+Global $myHourlyStatsElixir = ""
+Global $myHourlyStatsDark = ""
+Global $myHourlyStatsTrophy =""
+Global $topgoldloot = 0
+Global $topelixirloot = 0
+Global $topdarkloot = 0
+Global $topTrophyloot = 0
+
+; CSV Deployment Speed Mod
+Global $isldSelectedCSVSpeed[$iModeCount], $iCSVSpeeds[13]
+$isldSelectedCSVSpeed[$DB] = 4
+$isldSelectedCSVSpeed[$LB] = 4
+$iCSVSpeeds[0] = .1
+$iCSVSpeeds[1] = .25
+$iCSVSpeeds[2] = .5
+$iCSVSpeeds[3] = .75
+$iCSVSpeeds[4] = 1
+$iCSVSpeeds[5] = 1.25
+$iCSVSpeeds[6] = 1.5
+$iCSVSpeeds[7] = 1.75
+$iCSVSpeeds[8] = 2
+$iCSVSpeeds[9] = 2.25
+$iCSVSpeeds[10] = 2.5
+$iCSVSpeeds[11] = 2.75
+$iCSVSpeeds[12] = 3
+
+; Upgrade Management
+Global $bUpdateNewUpgradesOnly = False
+Global Const $UP = True, $DOWN = False, $TILL_END = True
 
 ;=== No variables below ! ================================================
 

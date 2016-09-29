@@ -2549,7 +2549,7 @@ Func applyConfig($bRedrawAtExit = True) ;Applies the data from config to the con
 	_GUICtrlComboBox_SetCurSel($cmbLvl11, $cmbLvl11Fill)
 	_GUICtrlComboBox_SetCurSel($cmbLvl12, $cmbLvl12Fill)
 	GUICtrlSetData($sldCollectorTolerance, $toleranceOffset)
-	;checkCollectors()
+	checkCollectors()
 
 	;Share Attack Settings----------------------------------------
 	GUICtrlSetData($txtShareMinGold, $iShareminGold)
@@ -2676,6 +2676,12 @@ Func applyConfig($bRedrawAtExit = True) ;Applies the data from config to the con
 		GUICtrlSetState($chkMultyFarming, $GUI_UNCHECKED)
 	EndIf
 		GUICtrlSetData($Account, $iAccount)
+	
+	If $ichkMultyWithBoost = 1 Then
+		GUICtrlSetState($chkMultyWithBoost, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($chkMultyWithBoost, $GUI_UNCHECKED)
+	EndIf
 	MultiFarming()
 	
 	; ChatBot by TheRevenor
@@ -2743,6 +2749,13 @@ Func applyConfig($bRedrawAtExit = True) ;Applies the data from config to the con
 		GUICtrlSetState($chkUpdateNewUpgradesOnly, $GUI_CHECKED)
 	Else
 		GUICtrlSetState($chkUpdateNewUpgradesOnly, $GUI_UNCHECKED)
+	EndIf
+	
+	; Deleted Wrong Troops - Added by TheRevenor
+	If $ichkDeleteTroops = 1 Then
+		GUICtrlSetState($chkDeleteTroops, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($chkDeleteTroops, $GUI_UNCHECKED)
 	EndIf
 
 	; Profile Switch

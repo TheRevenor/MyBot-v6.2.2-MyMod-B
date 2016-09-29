@@ -1060,6 +1060,7 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		; Multi Farming Settings - Added by TheRevenor
 		$ichkSwitchDonate = IniRead($config, "Multy", "SwitchDonate", "0")
 		$ichkMultyFarming = IniRead($config, "Multy", "MultyFarming", "0")
+		$ichkMultyWithBoost = IniRead($config, "Multy", "MultyWithBoost", "0")
 		$iAccount = IniRead($config, "Multy", "Account", "2")
 		
 		; Donate Stats - Added by cutidudz
@@ -1095,6 +1096,9 @@ Func readConfig($inputfile = $config, $partial = False) ;Reads config and sets i
 		Else
 			$bUpdateNewUpgradesOnly = False
 		EndIf
+		
+		; Deleted Wrong Troops - Added by TheRevenor
+		$ichkDeleteTroops = IniRead($config, "Mod", "DeletedTroops", "0")
 		
 	Else
 		Return False
